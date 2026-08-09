@@ -6,7 +6,7 @@ from routes.test_database import router as test_database_router
 from routes.products import router as products_router
 from routes.artisans import router as artisans_router
 app = FastAPI(
-    title="SKOUFY API",
+    title="SOUKIFY API",
     description="Backend API for the SOUKIFY AI-powered marketplace PoC",
     version="0.1.0",
 )
@@ -23,7 +23,7 @@ app.add_middleware(
 
 @app.get("/")
 def root():
-    return {"message": "SKOUFY API is running!"}
+    return {"message": "SOUKIFY API is running!"}
 
 @app.get("/health")
 def health_check():

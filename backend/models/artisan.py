@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from unicodedata import name
+
 
 def artisan_document(
     name: str, 
