@@ -4,12 +4,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from database.mongodb import check_mongodb_connection
 from routes.test_database import router as test_database_router
 from routes.products import router as products_router
+from routes.artisans import router as artisans_router
 app = FastAPI(
     title="SKOUFY API",
     description="Backend API for the SOUKIFY AI-powered marketplace PoC",
     version="0.1.0",
 )
-
+app.include_router(products_router)
+app.include_router(artisans_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -18,7 +20,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(products_router)
+
 @app.get("/")
 def root():
     return {"message": "SKOUFY API is running!"}
