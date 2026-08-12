@@ -1,5 +1,4 @@
-from pydantic import BaseModel
-
+from pydantic import BaseModel, Field
 
 class ProductCreate(BaseModel):
     artisan_id: str
@@ -8,7 +7,10 @@ class ProductCreate(BaseModel):
     description_ar: str
     category: str
     material: str
-    price: float
+    style: str
+    colors: list[str]
+    tags: list[str]
+    price: float = Field(gt=0)
 
 
 class ProductResponse(ProductCreate):

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException
+from schemas.product import ProductCreate
 from database.mongodb import db
 from schemas.product import ProductCreate
 from models.product import product_document
@@ -33,13 +34,16 @@ def create_product(product: ProductCreate):
         )
 
     document = product_document(
-        artisan_id=product.artisan_id,
-        title=product.title,
-        description_fr=product.description_fr,
-        description_ar=product.description_ar,
-        category=product.category,
-        material=product.material,
-        price=product.price
+    artisan_id=product.artisan_id,
+    title=product.title,
+    description_fr=product.description_fr,
+    description_ar=product.description_ar,
+    category=product.category,
+    material=product.material,
+    style=product.style,
+    colors=product.colors,
+    tags=product.tags,
+    price=product.price
     )
 
     result = db.products.insert_one(document)

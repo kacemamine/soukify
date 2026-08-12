@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime , timezone
+
 
 
 def product_document(
@@ -8,6 +9,9 @@ def product_document(
     description_ar: str,
     category: str,
     material: str,
+    style: str,
+    colors: list[str],
+    tags: list[str],
     price: float,
     status: str = "draft"
 ):
@@ -18,7 +22,10 @@ def product_document(
         "description_ar": description_ar,
         "category": category,
         "material": material,
+        "style": style,
+        "colors": colors,
+        "tags": tags,
         "price": price,
         "status": status,
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc)
     }

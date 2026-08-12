@@ -10,36 +10,30 @@ client=genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 def analyze_product_image(image_bytes: bytes,content_type: str):
     image=Image.open(BytesIO(image_bytes))
-    prompt="""
+    prompt = """
+Analyse the Moroccan handcrafted product shown in the image.
 
-You are analyzing a Moroccan handcrafted product
-for the SOUKIFY marketplace.
-
-Analyze only information that can reasonably be inferred
-from the provided image.
-
-Identify:
-
-- product type
-- material
-- style
-- dominant colors
-- category
-
-Then generate:
+Return the following fields:
 
 - title
 - description_fr
 - description_ar
+- category
+- material
+- style
+- colors
 - tags
 
 Rules:
-
-- Do not invent characteristics that are not visible.
-- The title must be concise and suitable for a marketplace.
-- description_fr must be written in French.
-- description_ar must be written in Arabic.
-- tags must contain relevant marketplace keywords.
+- title must be a concise marketplace title
+- description_fr must be in French
+- description_ar must be in Arabic
+- category must describe the product category
+- material must describe the apparent material
+- style must describe the apparent style
+- colors must be a list of visible dominant colors
+- tags must be a list of relevant keywords
+- do not invent information that cannot reasonably be inferred from the image
 """
 
     response = client.models.generate_content(
