@@ -17,6 +17,16 @@ type ListingData = {
 type ProductFormProps = {
   listing: ListingData
   setListing: Dispatch<SetStateAction<ListingData | null>>
+
+  artisanId: string
+  setArtisanId: Dispatch<SetStateAction<string>>
+
+  price: string
+  setPrice: Dispatch<SetStateAction<string>>
+
+  onSave: () => Promise<void>
+  saving: boolean
+  saveMessage: string | null
 }
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
@@ -165,8 +175,12 @@ export default function ListingPage() {
   const [image, setImage] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [listing, setListing] = useState<ListingData | null>(null)
+  const [artisanId, setArtisanId] = useState('')
+  const [price, setPrice] = useState('')
   const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
 
   useEffect(() => {
     return () => {
@@ -202,6 +216,8 @@ export default function ListingPage() {
     setImage(file)
     setPreview(URL.createObjectURL(file))
     setListing(null)
+    setArtisanId('')
+    setPrice('')
     setError(null)
   }
 
@@ -226,6 +242,8 @@ export default function ListingPage() {
       })
 
       const data = await readJsonResponse(response)
+      console.log('STATUS:', response.status)
+      console.log('REPONSE BACKEND:', data)
 
       if (!response.ok) {
         throw new Error(getApiErrorMessage(data))
@@ -250,10 +268,89 @@ export default function ListingPage() {
       } else {
         setError('Impossible de contacter le service d’analyse.')
       }
-    } finally {
+  } finally {
       setLoading(false)
     }
   }
+  async function handleSaveProduct() {
+  if (!listing) {
+    setError('Aucune fiche produit à enregistrer.')
+    return
+  }
+
+  if (!artisanId.trim()) {
+    setError("Veuillez renseigner l'identifiant de l'artisan.")
+    return
+  }
+
+  const numericPrice = Number(price)
+
+  if (!price.trim() || Number.isNaN(numericPrice) || numericPrice <= 0) {
+    setError('Veuillez renseigner un prix valide supérieur à 0.')
+    return
+  }
+
+  setSaving(true)
+  setError(null)
+  setSaveMessage(null)
+
+  const productPayload = {
+    artisan_id: artisanId.trim(),
+    title: listing.title.trim(),
+    description_fr: listing.description_fr.trim(),
+    description_ar: listing.description_ar.trim(),
+    category: listing.category.trim(),
+    material: listing.material.trim(),
+    style: listing.style.trim(),
+    colors: listing.colors.filter(Boolean),
+    tags: listing.tags.filter(Boolean),
+    price: numericPrice,
+  }
+
+  try {
+    const response = await fetch(
+      'http://127.0.0.1:8000/api/products',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(productPayload),
+      }
+    )
+
+    const data = await readJsonResponse(response)
+
+    if (!response.ok) {
+      throw new Error(getApiErrorMessage(data))
+    }
+
+    if (
+      !isRecord(data) ||
+      typeof data.id !== 'string'
+    ) {
+      throw new Error("Réponse d'enregistrement invalide.")
+    }
+
+    setSaveMessage(
+      `Produit enregistré avec succès. ID : ${data.id}`
+    )
+  } catch (err) {
+    if (err instanceof TypeError) {
+      setError(
+        "Impossible de contacter le service d'enregistrement."
+      )
+    } else if (err instanceof Error) {
+      setError(err.message)
+    } else {
+      setError(
+        "Une erreur est survenue lors de l'enregistrement."
+      )
+    }
+} finally {
+    setSaving(false)
+  }
+}
 
   return (
     <main className="souk-scope min-h-screen bg-[var(--canvas)] text-[var(--ink)]">
@@ -514,7 +611,17 @@ export default function ListingPage() {
                 </div>
               </div>
             ) : (
-              <ProductForm listing={listing} setListing={setListing} />
+              <ProductForm
+                listing={listing}
+                setListing={setListing}
+                artisanId={artisanId}
+                setArtisanId={setArtisanId}
+                price={price}
+                setPrice={setPrice}
+                onSave={handleSaveProduct}
+                saving={saving}
+                saveMessage={saveMessage}
+              />
             )}
           </section>
         </div>
@@ -539,7 +646,17 @@ export default function ListingPage() {
   )
 }
 
-function ProductForm({ listing, setListing }: ProductFormProps) {
+function ProductForm({
+  listing,
+  setListing,
+  artisanId,
+  setArtisanId,
+  price,
+  setPrice,
+  onSave,
+  saving,
+  saveMessage,
+}: ProductFormProps) {
   function updateField(field: keyof ListingData, value: string | string[]) {
     setListing((currentListing) => {
       if (!currentListing) return currentListing
@@ -576,6 +693,46 @@ function ProductForm({ listing, setListing }: ProductFormProps) {
         <div>
           <label htmlFor="listing-title" className={labelClass}>Titre du produit</label>
           <input id="listing-title" value={listing.title} onChange={(e) => updateField('title', e.target.value)} className={inputClass} />
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div>
+            <label
+              htmlFor="listing-artisan"
+              className={labelClass}
+            >
+              Identifiant artisan
+            </label>
+
+            <input
+              id="listing-artisan"
+              type="text"
+              value={artisanId}
+              onChange={(e) => setArtisanId(e.target.value)}
+              placeholder="ID MongoDB de l'artisan"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="listing-price"
+              className={labelClass}
+            >
+              Prix (MAD)
+            </label>
+
+            <input
+              id="listing-price"
+              type="number"
+              min="0"
+              step="0.01"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="Ex. 450"
+              className={inputClass}
+            />
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">
@@ -624,6 +781,36 @@ function ProductForm({ listing, setListing }: ProductFormProps) {
           inputClass={inputClass}
           variant="tag"
         />
+
+        <div className="border-t border-[var(--line)] pt-6">
+          <button
+            type="button"
+            onClick={onSave}
+            disabled={saving}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--green)] px-5 py-3.5 text-sm font-bold text-white transition hover:bg-[var(--green-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {saving ? (
+              <>
+                <SpinnerIcon className="h-4 w-4" />
+                Enregistrement...
+              </>
+            ) : (
+              <>
+                <CheckIcon className="h-4 w-4" />
+                Valider et enregistrer
+              </>
+            )}
+          </button>
+
+          {saveMessage && (
+            <div
+              role="status"
+              className="mt-4 rounded-lg border border-[var(--green)]/20 bg-[var(--green-soft)] px-4 py-3 text-sm font-semibold text-[var(--green)]"
+            >
+              {saveMessage}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
