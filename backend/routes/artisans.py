@@ -12,7 +12,10 @@ def create_artisan(artisan: ArtisanCreate):
     document=artisan_document(
         name=artisan.name,
         region=artisan.region,
-        workshop=artisan.workshop
+        workshop=artisan.workshop,
+        categories=artisan.categories,
+        skills=artisan.skills,
+        available=artisan.available
     )
     result=db.artisans.insert_one(document)
     return {"message": "Artisan created successfully","id": str(result.inserted_id) }
