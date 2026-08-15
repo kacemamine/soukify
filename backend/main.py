@@ -8,6 +8,7 @@ from routes.artisans import router as artisans_router
 from routes.listings import router as listings_router
 from routes.bespoke import router as bespoke_router
 from routes.matching import router as matching_router
+from routes.voice import router as voice_router
 app = FastAPI(
     title="SOUKIFY API",
     description="Backend API for the SOUKIFY AI-powered marketplace PoC",
@@ -18,6 +19,7 @@ app.include_router(artisans_router)
 app.include_router(listings_router)
 app.include_router(bespoke_router)
 app.include_router(matching_router)
+app.include_router(voice_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],

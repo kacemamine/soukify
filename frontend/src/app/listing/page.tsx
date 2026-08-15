@@ -1,7 +1,8 @@
 'use client'
 
 import type { ChangeEvent, Dispatch, FormEvent, SetStateAction } from 'react'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 
 type ListingData = {
   title: string
@@ -31,6 +32,19 @@ type ProductFormProps = {
 
 const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
+function createVoicePrefillListing(title: string, material: string): ListingData {
+  return {
+    title,
+    description_fr: '',
+    description_ar: '',
+    category: '',
+    material,
+    style: '',
+    colors: [],
+    tags: [],
+  }
+}
 
 const workflowSteps = [
   {
@@ -171,12 +185,51 @@ function ArrowIcon({ className = '' }: { className?: string }) {
   )
 }
 
+type VoicePrefill = {
+  title: string
+  price: string
+  material: string
+}
+
 export default function ListingPage() {
+  return (
+    <Suspense fallback={null}>
+      <ListingPageWithSearchParams />
+    </Suspense>
+  )
+}
+
+function ListingPageWithSearchParams() {
+  const searchParams = useSearchParams()
+
+  const voicePrefill: VoicePrefill = {
+    title: searchParams.get('title')?.trim() ?? '',
+    price: searchParams.get('price')?.trim() ?? '',
+    material: searchParams.get('material')?.trim() ?? '',
+  }
+
+  return (
+    <ListingPageContent
+      key={searchParams.toString()}
+      voicePrefill={voicePrefill}
+    />
+  )
+}
+
+function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
+  const hasVoicePrefill = Boolean(
+    voicePrefill.title || voicePrefill.price || voicePrefill.material
+  )
+
   const [image, setImage] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
-  const [listing, setListing] = useState<ListingData | null>(null)
+  const [listing, setListing] = useState<ListingData | null>(() =>
+    hasVoicePrefill
+      ? createVoicePrefillListing(voicePrefill.title, voicePrefill.material)
+      : null
+  )
   const [artisanId, setArtisanId] = useState('')
-  const [price, setPrice] = useState('')
+  const [price, setPrice] = useState(voicePrefill.price)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -198,7 +251,12 @@ export default function ListingPage() {
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       setImage(null)
       setPreview(null)
-      setListing(null)
+      setListing(
+        voicePrefill.title || voicePrefill.price || voicePrefill.material
+          ? createVoicePrefillListing(voicePrefill.title, voicePrefill.material)
+          : null
+      )
+      setPrice(voicePrefill.price)
       setError('Format non supporté. Veuillez choisir une image JPEG, PNG ou WebP.')
       event.currentTarget.value = ''
       return
@@ -207,7 +265,12 @@ export default function ListingPage() {
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
       setImage(null)
       setPreview(null)
-      setListing(null)
+      setListing(
+        voicePrefill.title || voicePrefill.price || voicePrefill.material
+          ? createVoicePrefillListing(voicePrefill.title, voicePrefill.material)
+          : null
+      )
+      setPrice(voicePrefill.price)
       setError('Image trop volumineuse. Veuillez choisir un fichier de 10 MB maximum.')
       event.currentTarget.value = ''
       return
@@ -215,9 +278,13 @@ export default function ListingPage() {
 
     setImage(file)
     setPreview(URL.createObjectURL(file))
-    setListing(null)
+    setListing(
+      voicePrefill.title || voicePrefill.price || voicePrefill.material
+        ? createVoicePrefillListing(voicePrefill.title, voicePrefill.material)
+        : null
+    )
     setArtisanId('')
-    setPrice('')
+    setPrice(voicePrefill.price)
     setError(null)
   }
 
@@ -259,7 +326,15 @@ export default function ListingPage() {
         throw new Error('Réponse IA invalide.')
       }
 
-      setListing(analysis)
+      setListing({
+        ...analysis,
+        title: voicePrefill.title || analysis.title,
+        material: voicePrefill.material || analysis.material,
+      })
+
+      if (voicePrefill.price) {
+        setPrice(voicePrefill.price)
+      }
     } catch (err) {
       if (err instanceof TypeError) {
         setError('Impossible de contacter le service d’analyse.')
