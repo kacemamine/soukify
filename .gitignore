@@ -1,25 +1,16 @@
-# Environment variables
+# Environment
 .env
 *.env
 
 # Python
 __pycache__/
-*.py[cod]
-backend/venv/
+*.pyc
 .venv/
+venv/
 
-# Node
-frontend/node_modules/
-frontend/.next/
-frontend/out/
+# Next.js
+node_modules/
+.next/
 
-# IDE
-.vscode/
-.idea/
-
-# OS
+# Misc
 .DS_Store
-Thumbs.db
-
-# Logs
-*.log

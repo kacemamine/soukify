@@ -1,43 +1,66 @@
 # SOUKIFY
 
-SOUKIFY is an AI-powered marketplace PoC dedicated to the digitalization
-and promotion of Moroccan craftsmanship.
+SOUKIFY est un Proof of Concept (PoC) de marketplace digitale dédiée à l'artisanat marocain.
 
-## Project
+Le projet vise à faciliter la création de fiches produits, la gestion des demandes personnalisées et la mise en relation avec les artisans grâce à l'intelligence artificielle.
 
-The prototype focuses on three main modules:
+---
 
-- AI-Powered Listings
-- Bespoke Commissions
-- Darija Voice Commands
+## Fonctionnalités principales
 
-## Technology Stack
+### 1. AI-Powered Listing
 
-### Frontend
-- Next.js
-- TypeScript
-- Tailwind CSS
+Le module AI-Powered Listing permet de générer automatiquement une fiche produit à partir d'une image.
 
-### Backend
-- FastAPI
-- Python
+L'utilisateur peut importer une photo d'un produit artisanal. Gemini analyse ensuite l'image et génère :
 
-### Database
-- MongoDB
+- le titre du produit ;
+- une description en français ;
+- une description en arabe ;
+- la catégorie ;
+- la matière ;
+- le style ;
+- les couleurs dominantes ;
+- les tags de recherche.
 
-### Artificial Intelligence
-- Computer Vision / Multimodal AI
-- Large Language Model
-- Speech-to-Text
+Les champs restent modifiables avant validation.
 
-## Project Structure
+Le produit peut ensuite être enregistré dans MongoDB.
 
-soukify/
-- frontend/
-- backend/
-- docs/
-- tests/
+---
 
-## Status
+### 2. Bespoke Commissions
 
-Project under development
+Le module Bespoke permet à un client de créer une demande de produit personnalisé.
+
+La demande peut contenir notamment :
+
+- une description ;
+- les dimensions ;
+- la matière ;
+- les couleurs ;
+- une inspiration ;
+- le budget ;
+- l'échéance ;
+- la catégorie ;
+- la région.
+
+Les demandes sont enregistrées dans MongoDB.
+
+---
+
+### 3. Matching artisans
+
+Après la création d'une demande Bespoke, SOUKIFY recherche les artisans correspondant aux besoins du client.
+
+Le prototype utilise un système de scoring basé sur :
+
+- Catégorie : 50 points
+- Savoir-faire : 20 points
+- Région : 20 points
+- Disponibilité : 10 points
+
+Score maximal :
+
+```text
+100 points
