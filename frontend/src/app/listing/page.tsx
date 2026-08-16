@@ -15,6 +15,13 @@ type ListingData = {
   tags: string[]
 }
 
+type PriceSuggestion = {
+  min_price: number | null
+  max_price: number | null
+  average_price: number | null
+  similar_products_count: number
+}
+
 type ProductFormProps = {
   listing: ListingData
   setListing: Dispatch<SetStateAction<ListingData | null>>
@@ -24,6 +31,8 @@ type ProductFormProps = {
 
   price: string
   setPrice: Dispatch<SetStateAction<string>>
+
+  priceSuggestion: PriceSuggestion | null
 
   onSave: () => Promise<void>
   saving: boolean
@@ -230,6 +239,8 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
   )
   const [artisanId, setArtisanId] = useState('')
   const [price, setPrice] = useState(voicePrefill.price)
+  const [priceSuggestion, setPriceSuggestion] =
+    useState<PriceSuggestion | null>(null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -288,6 +299,39 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
     setError(null)
   }
 
+  async function getPriceSuggestion(
+    category: string,
+    material: string
+  ): Promise<PriceSuggestion | null> {
+    if (!category.trim() && !material.trim()) {
+      return null
+    }
+
+    const params = new URLSearchParams()
+
+    if (category.trim()) {
+      params.set('category', category.trim())
+    }
+
+    if (material.trim()) {
+      params.set('material', material.trim())
+    }
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/api/products/price-suggestion?${params.toString()}`
+      )
+
+      if (!response.ok) {
+        return null
+      }
+
+      return (await response.json()) as PriceSuggestion
+    } catch {
+      return null
+    }
+  }
+
   async function handleAnalyze(event: FormEvent) {
     event.preventDefault()
 
@@ -326,15 +370,24 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
         throw new Error('Réponse IA invalide.')
       }
 
-      setListing({
+      const finalListing: ListingData = {
         ...analysis,
         title: voicePrefill.title || analysis.title,
         material: voicePrefill.material || analysis.material,
-      })
+      }
+
+      setListing(finalListing)
 
       if (voicePrefill.price) {
         setPrice(voicePrefill.price)
       }
+
+      const suggestion = await getPriceSuggestion(
+        finalListing.category,
+        finalListing.material
+      )
+
+      setPriceSuggestion(suggestion)
     } catch (err) {
       if (err instanceof TypeError) {
         setError('Impossible de contacter le service d’analyse.')
@@ -693,6 +746,7 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
                 setArtisanId={setArtisanId}
                 price={price}
                 setPrice={setPrice}
+                priceSuggestion={priceSuggestion}
                 onSave={handleSaveProduct}
                 saving={saving}
                 saveMessage={saveMessage}
@@ -728,6 +782,7 @@ function ProductForm({
   setArtisanId,
   price,
   setPrice,
+  priceSuggestion,
   onSave,
   saving,
   saveMessage,
@@ -807,6 +862,42 @@ function ProductForm({
               placeholder="Ex. 450"
               className={inputClass}
             />
+
+            {priceSuggestion && (
+              <div className="mt-3 rounded-lg border border-[var(--line)] bg-[var(--surface)] p-3">
+                {priceSuggestion.similar_products_count > 0 &&
+                priceSuggestion.min_price !== null &&
+                priceSuggestion.max_price !== null ? (
+                  <>
+                    <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--green)]">
+                      Prix indicatif observé
+                    </p>
+
+                    <p className="mt-1 text-lg font-bold text-[var(--ink)]">
+                      {priceSuggestion.min_price} – {priceSuggestion.max_price} MAD
+                    </p>
+
+                    {priceSuggestion.average_price !== null && (
+                      <p className="mt-1 text-sm text-[var(--muted)]">
+                        Prix moyen : {priceSuggestion.average_price} MAD
+                      </p>
+                    )}
+
+                    <p className="mt-1 text-xs text-[var(--muted)]">
+                      Basé sur {priceSuggestion.similar_products_count}{' '}
+                      produit
+                      {priceSuggestion.similar_products_count > 1 ? 's' : ''}{' '}
+                      similaire
+                      {priceSuggestion.similar_products_count > 1 ? 's' : ''}.
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-[var(--muted)]">
+                    Aucun produit similaire disponible pour proposer une fourchette de prix.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

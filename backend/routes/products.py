@@ -5,6 +5,7 @@ from schemas.product import ProductCreate
 from models.product import product_document
 from bson import ObjectId
 from bson.errors import InvalidId
+from services.price_service import suggest_price_range
 router = APIRouter(
     prefix="/api/products",
     tags=["Products"]
@@ -63,3 +64,22 @@ def get_products():
     return products
 
 
+@router.get("/price-suggestion")
+def get_price_suggestion(
+    category: str = "",
+    material: str = ""
+):
+    try:
+        result = suggest_price_range(
+            db,
+            category.strip(),
+            material.strip()
+        )
+
+        return result
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de la suggestion de prix : {str(e)}"
+        )
