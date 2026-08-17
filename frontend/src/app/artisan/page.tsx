@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 function SparkleIcon({ className = '' }: { className?: string }) {
   return (
@@ -96,6 +97,7 @@ function ArtisanIcon({ className = '' }: { className?: string }) {
 }
 
 export default function ArtisanPage() {
+  const router = useRouter()
   const [name, setName] = useState('')
   const [region, setRegion] = useState('')
   const [workshop, setWorkshop] = useState('')
@@ -154,6 +156,11 @@ export default function ArtisanPage() {
         )
       }
 
+      if (data.id) {
+        localStorage.setItem('soukify_artisan_id', data.id)
+        localStorage.setItem('soukify_artisan_name', name.trim())
+      }
+
       setMessage('Artisan enregistré avec succès.')
 
       setName('')
@@ -162,6 +169,8 @@ export default function ArtisanPage() {
       setCategories('')
       setSkills('')
       setAvailable(true)
+
+      router.push(`/listing?_t=${Date.now()}`)
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message)
@@ -299,7 +308,7 @@ export default function ArtisanPage() {
               href="#matching"
               className="transition hover:text-[var(--green)]"
             >
-              Matching
+              Demandes sur mesure
             </a>
           </div>
         </nav>
@@ -320,10 +329,8 @@ export default function ArtisanPage() {
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-8 text-[var(--muted)] sm:text-lg">
-              Renseignez votre atelier, votre région, vos catégories
-              et votre savoir-faire afin de permettre à SOUKIFY
-              d&apos;identifier les artisans adaptés aux commandes
-              sur-mesure.
+              Présentez votre activité, votre atelier et votre savoir-faire pour
+              recevoir des demandes adaptées à votre métier.
             </p>
 
             <div className="mt-8">
@@ -397,13 +404,12 @@ export default function ArtisanPage() {
                   className="mt-6 rounded-xl bg-[var(--green)] p-4 text-white"
                 >
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70">
-                    Matching
+                    Mise en relation
                   </p>
 
                   <p className="mt-2 text-sm leading-6">
-                    Les catégories, le savoir-faire, la région et la
-                    disponibilité pourront être utilisés pour comparer
-                    l&apos;artisan aux demandes Bespoke.
+                    Ces informations nous permettent de vous proposer des demandes
+                    correspondant à votre activité et à votre savoir-faire.
                   </p>
                 </div>
 
@@ -620,7 +626,7 @@ export default function ArtisanPage() {
                   ) : (
                     <>
                       <CheckIcon className="h-4 w-4" />
-                      Enregistrer l&apos;artisan
+                      Enregistrer mon profil
                     </>
                   )}
 
@@ -659,15 +665,15 @@ export default function ArtisanPage() {
           {[
             [
               'Catégories',
-              'Indiquent les types de produits réalisés par l’artisan.',
+              'Indique les types de créations que vous réalisez.',
             ],
             [
               'Savoir-faire',
-              'Décrit les compétences utilisées pour les commandes sur-mesure.',
+              'Présente les techniques et compétences que vous maîtrisez.',
             ],
             [
               'Disponibilité',
-              'Permet de savoir si l’artisan peut actuellement recevoir une demande.',
+              'Indique si vous pouvez actuellement recevoir de nouvelles demandes.',
             ],
           ].map(([title, text]) => (
 

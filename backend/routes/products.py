@@ -44,7 +44,9 @@ def create_product(product: ProductCreate):
     style=product.style,
     colors=product.colors,
     tags=product.tags,
-    price=product.price
+    price=product.price,
+    status=product.status,
+    image_url=product.image_url
     )
 
     result = db.products.insert_one(document)
@@ -60,6 +62,18 @@ def get_products():
     for product in db.products.find():
         product["id"] = str(product["_id"])
         del product["_id"]
+        
+        artisan_id = product.get("artisan_id")
+        artisan_name = None
+        if artisan_id:
+            try:
+                artisan = db.artisans.find_one({"_id": ObjectId(artisan_id)})
+                if artisan and "name" in artisan:
+                    artisan_name = artisan["name"]
+            except InvalidId:
+                pass
+        product["artisan_name"] = artisan_name
+        
         products.append(product)
     return products
 

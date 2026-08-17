@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel, Field
 
 class ProductCreate(BaseModel):
@@ -11,6 +12,8 @@ class ProductCreate(BaseModel):
     colors: list[str]
     tags: list[str]
     price: float = Field(gt=0)
+    status: str = "published"
+    image_url: Optional[str] = None
 
 
 class ProductResponse(ProductCreate):

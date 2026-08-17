@@ -195,12 +195,12 @@ export default function BespokePage() {
           </p>
 
           <h1 className="mt-2 text-3xl font-semibold text-stone-900">
-            Demande sur-mesure
+            Votre création sur mesure
           </h1>
 
           <p className="mt-3 text-stone-600">
-            Décrivez votre création et précisez vos besoins afin de
-            transmettre une demande structurée à un artisan.
+            Décrivez votre idée, vos envies et votre budget pour trouver l&apos;artisan
+            le plus adapté à votre projet.
           </p>
         </div>
 
@@ -428,7 +428,7 @@ export default function BespokePage() {
             >
               {loading
                 ? 'Enregistrement...'
-                : 'Envoyer la demande'}
+                : 'Envoyer ma demande'}
             </button>
 
           </div>

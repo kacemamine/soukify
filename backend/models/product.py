@@ -13,7 +13,8 @@ def product_document(
     colors: list[str],
     tags: list[str],
     price: float,
-    status: str = "draft"
+    status: str = "draft",
+    image_url: str = None
 ):
     return {
         "artisan_id": artisan_id,
@@ -27,5 +28,6 @@ def product_document(
         "tags": tags,
         "price": price,
         "status": status,
+        "image_url": image_url,
         "created_at": datetime.now(timezone.utc)
     }

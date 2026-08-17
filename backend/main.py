@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+import os
 
 from database.mongodb import check_mongodb_connection
 from routes.test_database import router as test_database_router
@@ -20,6 +22,10 @@ app.include_router(listings_router)
 app.include_router(bespoke_router)
 app.include_router(matching_router)
 app.include_router(voice_router)
+
+uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(uploads_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],

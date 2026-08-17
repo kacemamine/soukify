@@ -1,8 +1,10 @@
+import os
+import uuid
+
 from fastapi import APIRouter, HTTPException, File, UploadFile
 
 from services.vision_service import analyze_product_image
 from services.image_quality import check_image_quality
-
 
 router = APIRouter(
     prefix="/api/listings",
@@ -16,6 +18,7 @@ async def analyze_product_image_route(
 ):
     allowed_types = [
         "image/jpeg",
+        
         "image/png",
         "image/webp"
     ]
@@ -66,11 +69,33 @@ async def analyze_product_image_route(
         )
 
     # -------------------------------------------------
+    # Save Image
+    # -------------------------------------------------
+    uploads_dir = os.path.join(os.path.dirname(__file__), "..", "uploads", "products")
+    os.makedirs(uploads_dir, exist_ok=True)
+    
+    if image.content_type == "image/png":
+        ext = "png"
+    elif image.content_type == "image/webp":
+        ext = "webp"
+    else:
+        ext = "jpg"
+        
+    filename = f"{uuid.uuid4()}.{ext}"
+    filepath = os.path.join(uploads_dir, filename)
+    
+    with open(filepath, "wb") as f:
+        f.write(image_bytes)
+        
+    image_url = f"/uploads/products/{filename}"
+
+    # -------------------------------------------------
     # Réponse
     # -------------------------------------------------
 
     return {
         "filename": image.filename,
         "quality": quality,
-        "analysis": ai_result.model_dump()
+        "analysis": ai_result.model_dump(),
+        "image_url": image_url
     }

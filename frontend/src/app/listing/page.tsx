@@ -3,6 +3,7 @@
 import type { ChangeEvent, Dispatch, FormEvent, SetStateAction } from 'react'
 import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 
 type ListingData = {
   title: string
@@ -28,6 +29,8 @@ type ProductFormProps = {
 
   artisanId: string
   setArtisanId: Dispatch<SetStateAction<string>>
+
+  artisanName: string
 
   price: string
   setPrice: Dispatch<SetStateAction<string>>
@@ -58,15 +61,15 @@ function createVoicePrefillListing(title: string, material: string): ListingData
 const workflowSteps = [
   {
     title: 'Photo produit',
-    description: 'JPEG, PNG ou WebP',
+    description: 'Ajoutez une photo claire de votre création.',
   },
   {
-    title: 'Analyse Gemini',
-    description: 'Extraction des champs de fiche',
+    title: 'Analyse automatique',
+    description: 'SOUKIFY prépare les informations de votre annonce.',
   },
   {
-    title: 'Formulaire editable',
-    description: 'Correction manuelle avant validation',
+    title: 'Informations modifiables',
+    description: 'Vérifiez et corrigez les informations avant validation.',
   },
 ]
 
@@ -232,12 +235,14 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
 
   const [image, setImage] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [listing, setListing] = useState<ListingData | null>(() =>
     hasVoicePrefill
       ? createVoicePrefillListing(voicePrefill.title, voicePrefill.material)
       : null
   )
   const [artisanId, setArtisanId] = useState('')
+  const [artisanName, setArtisanName] = useState('')
   const [price, setPrice] = useState(voicePrefill.price)
   const [priceSuggestion, setPriceSuggestion] =
     useState<PriceSuggestion | null>(null)
@@ -245,6 +250,7 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [profileChecked, setProfileChecked] = useState(false)
 
   useEffect(() => {
     return () => {
@@ -254,6 +260,18 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
     }
   }, [preview])
 
+  useEffect(() => {
+    const savedArtisanId = localStorage.getItem('soukify_artisan_id')
+    if (savedArtisanId) {
+      setArtisanId(savedArtisanId)
+    }
+    const savedArtisanName = localStorage.getItem('soukify_artisan_name')
+    if (savedArtisanName) {
+      setArtisanName(savedArtisanName)
+    }
+    setProfileChecked(true)
+  }, [])
+
   function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
 
@@ -262,6 +280,7 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       setImage(null)
       setPreview(null)
+      setImageUrl(null)
       setListing(
         voicePrefill.title || voicePrefill.price || voicePrefill.material
           ? createVoicePrefillListing(voicePrefill.title, voicePrefill.material)
@@ -276,6 +295,7 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
       setImage(null)
       setPreview(null)
+      setImageUrl(null)
       setListing(
         voicePrefill.title || voicePrefill.price || voicePrefill.material
           ? createVoicePrefillListing(voicePrefill.title, voicePrefill.material)
@@ -289,12 +309,12 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
 
     setImage(file)
     setPreview(URL.createObjectURL(file))
+    setImageUrl(null)
     setListing(
       voicePrefill.title || voicePrefill.price || voicePrefill.material
         ? createVoicePrefillListing(voicePrefill.title, voicePrefill.material)
         : null
     )
-    setArtisanId('')
     setPrice(voicePrefill.price)
     setError(null)
   }
@@ -353,8 +373,6 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
       })
 
       const data = await readJsonResponse(response)
-      console.log('STATUS:', response.status)
-      console.log('REPONSE BACKEND:', data)
 
       if (!response.ok) {
         throw new Error(getApiErrorMessage(data))
@@ -377,6 +395,9 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
       }
 
       setListing(finalListing)
+      if (typeof data.image_url === 'string') {
+        setImageUrl(data.image_url)
+      }
 
       if (voicePrefill.price) {
         setPrice(voicePrefill.price)
@@ -407,7 +428,7 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
   }
 
   if (!artisanId.trim()) {
-    setError("Veuillez renseigner l'identifiant de l'artisan.")
+    setError("Veuillez créer votre profil artisan avant d'enregistrer un produit.")
     return
   }
 
@@ -433,6 +454,8 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
     colors: listing.colors.filter(Boolean),
     tags: listing.tags.filter(Boolean),
     price: numericPrice,
+    status: 'published',
+    ...(imageUrl ? { image_url: imageUrl } : {}),
   }
 
   try {
@@ -460,9 +483,11 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
       throw new Error("Réponse d'enregistrement invalide.")
     }
 
-    setSaveMessage(
-      `Produit enregistré avec succès. ID : ${data.id}`
-    )
+    if (artisanName) {
+      setSaveMessage(`Votre produit a été publié avec succès par ${artisanName}.`)
+    } else {
+      setSaveMessage('Votre produit a été publié avec succès.')
+    }
   } catch (err) {
     if (err instanceof TypeError) {
       setError(
@@ -554,8 +579,8 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
           </div>
 
           <div className="hidden items-center gap-6 text-sm font-semibold text-[var(--muted)] md:flex">
-            <a href="#analyse" className="transition hover:text-[var(--green)]">Analyse IA</a>
-            <a href="#workflow" className="transition hover:text-[var(--green)]">Workflow</a>
+            <a href="#analyse" className="transition hover:text-[var(--green)]">Analyse automatique</a>
+            <a href="#workflow" className="transition hover:text-[var(--green)]">Comment ça marche</a>
           </div>
         </nav>
 
@@ -567,11 +592,13 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
             </div>
 
             <h1 className="font-display mt-6 max-w-3xl text-5xl font-semibold leading-[1.02] text-[var(--ink)] sm:text-6xl lg:text-7xl">
-              Création intelligente d&apos;une fiche produit.
+              Publiez votre création en quelques instants.
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-8 text-[var(--muted)] sm:text-lg">
-              SOUKIFY est un PoC de marketplace dédiée à l&apos;artisanat marocain. Ajoutez une photo de votre produit artisanal: l&apos;IA génère une proposition structurée que vous pouvez vérifier et modifier.
+              Ajoutez simplement une photo de votre création. SOUKIFY prépare
+              automatiquement les informations de votre annonce, que vous pouvez
+              ensuite vérifier et modifier avant de l&apos;enregistrer.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -579,7 +606,7 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
                 href="#analyse"
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--green)] px-5 py-3.5 text-sm font-bold text-white shadow-[0_18px_40px_-20px_rgba(24,79,70,0.9)] transition hover:bg-[var(--green-strong)]"
               >
-                Analyser le produit
+                Ajouter mon produit
                 <ArrowIcon className="h-4 w-4" />
               </a>
             </div>
@@ -590,8 +617,8 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
               <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5">
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--green)]">Flux actuel</p>
-                    <h2 className="font-display mt-2 text-3xl font-semibold">AI-Powered Listing</h2>
+                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--green)]">Comment ça marche</p>
+                    <h2 className="font-display mt-2 text-3xl font-semibold">Créer une annonce</h2>
                   </div>
                   <div className="grid h-12 w-12 place-items-center rounded-xl bg-[var(--green)] text-white">
                     <SparkleIcon className="h-6 w-6" />
@@ -615,7 +642,8 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
                 <div className="mt-6 rounded-xl bg-[var(--green)] p-4 text-white">
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70">Important</p>
                   <p className="mt-2 text-sm leading-6">
-                    L&apos;IA propose le contenu de la fiche. La validation finale reste manuelle et aucune publication automatique n&apos;est effectuée depuis cette page.
+                    Les informations proposées restent entièrement modifiables.
+                    Vous gardez toujours le contrôle avant l&apos;enregistrement de votre annonce.
                   </p>
                 </div>
               </div>
@@ -627,16 +655,38 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
       <section id="analyse" className="bg-[var(--canvas)]">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[420px_1fr] lg:px-8 lg:py-14">
           <section>
-            <form
-              onSubmit={handleAnalyze}
-              aria-describedby={error ? 'listing-error' : undefined}
-              className="sticky top-6 rounded-2xl border border-[var(--line)] bg-[var(--surface-strong)] p-5 shadow-[0_24px_70px_-45px_rgba(25,21,17,0.65)] sm:p-6"
-            >
+            {!profileChecked ? (
+              <div className="flex min-h-[400px] items-center justify-center rounded-2xl border border-[var(--line)] bg-[var(--surface-strong)] shadow-[0_24px_70px_-45px_rgba(25,21,17,0.65)]">
+                <SpinnerIcon className="h-8 w-8 text-[var(--green)]" />
+              </div>
+            ) : !artisanId ? (
+              <div className="rounded-2xl border border-[var(--line)] bg-white p-6 shadow-[0_24px_70px_-45px_rgba(25,21,17,0.65)] sm:p-8">
+                <div className="flex flex-col items-center text-center">
+                  <h2 className="font-display text-2xl font-semibold text-[var(--ink)]">
+                    Créez d&apos;abord votre profil artisan
+                  </h2>
+                  <p className="mt-3 text-base leading-7 text-[var(--muted)]">
+                    Pour publier une création sur SOUKIFY, vous devez disposer d&apos;un profil artisan.
+                  </p>
+                  <Link
+                    href="/artisan"
+                    className="mt-6 inline-flex items-center justify-center rounded-lg bg-[var(--green)] px-6 py-3.5 font-bold text-white transition hover:bg-[var(--green-strong)]"
+                  >
+                    Créer mon profil artisan
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <form
+                onSubmit={handleAnalyze}
+                aria-describedby={error ? 'listing-error' : undefined}
+                className="sticky top-6 rounded-2xl border border-[var(--line)] bg-[var(--surface-strong)] p-5 shadow-[0_24px_70px_-45px_rgba(25,21,17,0.65)] sm:p-6"
+              >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--green)]">Studio listing</p>
-                  <h2 className="font-display mt-2 text-2xl font-semibold">Générer une fiche produit</h2>
-                  <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Ajoutez une photo nette. L&apos;IA prépare le titre, les descriptions, les couleurs et les tags.</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--green)]">Nouveau produit</p>
+                  <h2 className="font-display mt-2 text-2xl font-semibold">Ajouter un produit</h2>
+                  <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Ajoutez une photo nette de votre création. SOUKIFY vous aide à préparer le titre, la description et les principales informations de l&apos;annonce.</p>
                 </div>
                 <div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-[var(--green-soft)] text-[var(--green)]">
                   <CameraIcon className="h-5 w-5" />
@@ -693,7 +743,7 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
                 ) : (
                   <>
                     <SparkleIcon className="h-4 w-4" />
-                    Analyser le produit
+                    Préparer mon annonce
                   </>
                 )}
               </button>
@@ -708,6 +758,7 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
                 </div>
               )}
             </form>
+            )}
           </section>
 
           <section>
@@ -716,10 +767,10 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
                 <div className="rounded-2xl border border-[var(--line)] bg-[var(--surface-strong)] p-6 shadow-[0_24px_70px_-45px_rgba(25,21,17,0.65)] sm:p-8">
                   <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--green)]">Aperçu annonce</p>
-                      <h2 className="font-display mt-2 text-3xl font-semibold">Votre fiche apparaîtra ici.</h2>
+                      <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--green)]">Aperçu de l&apos;annonce</p>
+                      <h2 className="font-display mt-2 text-3xl font-semibold">Votre annonce apparaîtra ici.</h2>
                       <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--muted)]">
-                        Après l&apos;analyse, les informations générées s&apos;afficheront dans un formulaire entièrement modifiable.
+                        Après l&apos;analyse de votre photo, vous pourrez vérifier et modifier toutes les informations avant de les enregistrer.
                       </p>
                     </div>
                     <div className="grid h-16 w-16 place-items-center rounded-xl bg-[var(--green-soft)] text-[var(--green)]">
@@ -744,6 +795,7 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
                 setListing={setListing}
                 artisanId={artisanId}
                 setArtisanId={setArtisanId}
+                artisanName={artisanName}
                 price={price}
                 setPrice={setPrice}
                 priceSuggestion={priceSuggestion}
@@ -759,9 +811,9 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
       <section className="border-t border-[var(--line)] bg-[var(--surface)]">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:px-6 md:grid-cols-3 lg:px-8">
           {[
-            ['Analyse par image', "La page envoie uniquement la photo produit au service d'analyse IA configuré."],
-            ['Champs modifiables', 'Le titre, les descriptions, la catégorie, la matière, le style, les couleurs et les tags restent éditables.'],
-            ['Validation manuelle', 'La génération IA ne publie rien automatiquement. La validation finale reste séparée de cette page.'],
+            ['Analyse de votre photo', "SOUKIFY utilise votre photo pour préparer automatiquement les principales informations du produit."],
+            ['Informations modifiables', 'Le titre, les descriptions, la catégorie, la matière, le style, les couleurs et les tags peuvent être modifiés.'],
+            ['Vous gardez le contrôle', "Vérifiez les informations proposées avant d'enregistrer votre annonce."],
           ].map(([title, text]) => (
             <div key={title} className="rounded-2xl border border-[var(--line)] bg-white p-5">
               <CheckIcon className="h-5 w-5 text-[var(--green)]" />
@@ -780,6 +832,7 @@ function ProductForm({
   setListing,
   artisanId,
   setArtisanId,
+  artisanName,
   price,
   setPrice,
   priceSuggestion,
@@ -812,7 +865,12 @@ function ProductForm({
             Analyse IA terminée
           </div>
           <h2 className="font-display mt-4 text-3xl font-semibold">Fiche produit générée</h2>
-          <p className="mt-2 text-sm leading-6 text-[var(--muted)]">Vérifiez et modifiez les informations générées avant validation.</p>
+          {artisanName && (
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--green)]/20 bg-[var(--green-soft)] px-3 py-1 text-xs font-bold uppercase tracking-[0.1em] text-[var(--green)]">
+              Artisan : {artisanName}
+            </div>
+          )}
+          <p className="mt-3 text-sm leading-6 text-[var(--muted)]">Vérifiez et modifiez les informations générées avant validation.</p>
         </div>
         <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3 text-sm font-semibold leading-6 text-[var(--muted)]">
           Aucune publication automatique.
@@ -826,23 +884,19 @@ function ProductForm({
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          <div>
-            <label
-              htmlFor="listing-artisan"
-              className={labelClass}
-            >
-              Identifiant artisan
-            </label>
-
-            <input
-              id="listing-artisan"
-              type="text"
-              value={artisanId}
-              onChange={(e) => setArtisanId(e.target.value)}
-              placeholder="ID MongoDB de l'artisan"
-              className={inputClass}
-            />
-          </div>
+          {!artisanId && (
+            <div>
+              <div className="flex h-full flex-col justify-center rounded-xl border border-[var(--terracotta)]/30 bg-[var(--terracotta)]/[0.07] p-4 text-sm text-[var(--terracotta)]">
+                <p className="font-semibold">
+                  Aucun profil artisan n&apos;est associé à cet appareil.
+                  Créez votre profil artisan avant d&apos;enregistrer un produit.
+                </p>
+                <Link href="/artisan" className="mt-2 font-bold hover:underline">
+                  Créer mon profil artisan
+                </Link>
+              </div>
+            </div>
+          )}
 
           <div>
             <label
@@ -963,7 +1017,7 @@ function ProductForm({
             ) : (
               <>
                 <CheckIcon className="h-4 w-4" />
-                Valider et enregistrer
+                Publier mon produit
               </>
             )}
           </button>
@@ -973,7 +1027,10 @@ function ProductForm({
               role="status"
               className="mt-4 rounded-lg border border-[var(--green)]/20 bg-[var(--green-soft)] px-4 py-3 text-sm font-semibold text-[var(--green)]"
             >
-              {saveMessage}
+              <p>{saveMessage}</p>
+              <Link href="/products" className="mt-2 inline-block font-bold underline hover:no-underline">
+                Voir les créations →
+              </Link>
             </div>
           )}
         </div>

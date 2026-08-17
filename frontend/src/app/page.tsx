@@ -29,17 +29,17 @@ export default function HomePage() {
         <div className="max-w-3xl">
 
           <p className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-[#185347]">
-            Artisanat marocain × Intelligence artificielle
+            L&apos;ARTISANAT MAROCAIN, SIMPLEMENT EN LIGNE
           </p>
 
           <h2 className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
-            Digitaliser l&apos;artisanat marocain grâce à l&apos;IA.
+            Découvrez, créez et partagez l&apos;artisanat marocain.
           </h2>
 
           <p className="mt-6 max-w-2xl text-lg leading-8 text-[#756c62]">
-            SOUKIFY est un prototype de marketplace permettant aux artisans
-            de créer leurs annonces à partir d&apos;une photo ou de leur voix,
-            et aux clients de soumettre des demandes de créations sur mesure.
+            SOUKIFY rapproche artisans et clients autour de créations marocaines
+            uniques. Publiez facilement vos produits, découvrez des savoir-faire
+            authentiques et réalisez vos créations sur mesure.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -47,14 +47,21 @@ export default function HomePage() {
               href="/listing"
               className="rounded-lg bg-[#185347] px-6 py-3.5 text-center font-semibold text-white transition hover:bg-[#123f37]"
             >
-              Créer une fiche produit
+              Publier un produit
             </Link>
 
             <Link
               href="/bespoke"
               className="rounded-lg border border-[#cabca8] bg-white px-6 py-3.5 text-center font-semibold transition hover:border-[#185347]"
             >
-              Demande sur mesure
+              Commander sur mesure
+            </Link>
+
+            <Link
+              href="/products"
+              className="rounded-lg border border-[#185347] bg-[#f6f0e5] px-6 py-3.5 text-center font-semibold text-[#185347] transition hover:bg-[#185347] hover:text-white"
+            >
+              Découvrir les créations
             </Link>
           </div>
         </div>
@@ -64,24 +71,24 @@ export default function HomePage() {
         <div className="grid gap-5 md:grid-cols-3">
 
           <FeatureCard
-            title="AI-Powered Listing"
-            description="Ajoutez une photo et laissez l'IA générer le titre, les descriptions, la catégorie et les tags."
+            title="Publiez votre création"
+            description="Ajoutez simplement une photo de votre produit. SOUKIFY vous aide à préparer automatiquement votre annonce."
             href="/listing"
-            action="Analyser un produit"
+            action="Ajouter un produit"
           />
 
           <FeatureCard
-            title="Bespoke Commissions"
-            description="Structurez une demande de création personnalisée et identifiez les artisans les plus pertinents."
+            title="Créez sur mesure"
+            description="Décrivez la création que vous recherchez et trouvez les artisans les plus adaptés à votre projet."
             href="/bespoke"
-            action="Créer une demande"
+            action="Faire une demande"
           />
 
           <FeatureCard
-            title="Darija Voice"
-            description="Décrivez oralement le produit en darija pour pré-remplir automatiquement la fiche."
+            title="Publiez avec votre voix"
+            description="Décrivez simplement votre produit en darija et laissez SOUKIFY préparer les informations de votre annonce."
             href="/voice"
-            action="Utiliser la voix"
+            action="Utiliser ma voix"
           />
 
         </div>
