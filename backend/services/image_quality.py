@@ -4,6 +4,12 @@ from PIL import Image, ImageFilter, ImageStat, UnidentifiedImageError
 
 
 def check_image_quality(image_bytes: bytes) -> dict:
+    """
+    Vérifie si une image possède une qualité suffisante avant son analyse par l'IA.
+
+    Les contrôles portent notamment sur la résolution, la luminosité,
+    la surexposition et le niveau de flou, permettant d'éviter des appels IA inutiles.
+    """
     try:
         image = Image.open(BytesIO(image_bytes)).convert("RGB")
     except UnidentifiedImageError:
@@ -15,7 +21,7 @@ def check_image_quality(image_bytes: bytes) -> dict:
 
     width, height = image.size
 
-    # 1. Résolution minimale
+    # 1. Résolution minimale : On s'assure que l'image est assez grande pour une analyse détaillée.
     if width < 400 or height < 400:
         return {
             "is_acceptable": False,
@@ -29,7 +35,7 @@ def check_image_quality(image_bytes: bytes) -> dict:
     # Conversion en niveaux de gris
     gray = image.convert("L")
 
-    # 2. Luminosité moyenne
+    # 2. Luminosité moyenne : Un seuil de 45 permet de détecter les images trop sombres.
     brightness = ImageStat.Stat(gray).mean[0]
 
     if brightness < 45:
@@ -52,7 +58,7 @@ def check_image_quality(image_bytes: bytes) -> dict:
             )
         }
 
-    # 3. Estimation simple du flou
+    # 3. Estimation simple du flou : Une variance faible (< 150) indique souvent un manque de netteté.
     edges = gray.filter(ImageFilter.FIND_EDGES)
     sharpness_score = ImageStat.Stat(edges).var[0]
 

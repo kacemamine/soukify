@@ -54,36 +54,48 @@ export default function BespokePage() {
   }
 
   async function loadMatching(bespokeId: string) {
-    setMatchingLoading(true)
-    setMatchingError(null)
-    setMatches([])
+  setMatchingLoading(true)
+  setMatchingError(null)
+  setMatches([])
 
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/api/matching/${bespokeId}`
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:8000/api/matching/${bespokeId}`
+    )
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(
+        typeof data.detail === 'string'
+          ? data.detail
+          : 'Erreur lors du matching des artisans.'
       )
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(
-          typeof data.detail === 'string'
-            ? data.detail
-            : 'Erreur lors du matching des artisans.'
-        )
-      }
-
-      setMatches(data.matches || [])
-    } catch (err) {
-      if (err instanceof Error) {
-        setMatchingError(err.message)
-      } else {
-        setMatchingError('Une erreur est survenue.')
-      }
-    } finally {
-      setMatchingLoading(false)
     }
+
+    const artisanMatches: ArtisanMatch[] = data.matches || []
+
+    setMatches(artisanMatches)
+
+    if (artisanMatches.length > 0) {
+      setSuccess(
+        `Demande enregistrée avec succès. Artisan recommandé : ${artisanMatches[0].name}`
+      )
+    } else {
+      setSuccess(
+        'Demande enregistrée avec succès. Aucun artisan correspondant trouvé.'
+      )
+    }
+  } catch (err) {
+    if (err instanceof Error) {
+      setMatchingError(err.message)
+    } else {
+      setMatchingError('Une erreur est survenue.')
+    }
+  } finally {
+    setMatchingLoading(false)
   }
+}
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -152,10 +164,7 @@ export default function BespokePage() {
         )
       }
 
-      setSuccess(
-        `Demande enregistrée avec succès. ID : ${data.id}`
-      )
-
+      // Matching après création d'une demande : recherche des artisans correspondants
       await loadMatching(data.id)
 
       setForm({

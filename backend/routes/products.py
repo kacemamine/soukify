@@ -16,6 +16,7 @@ router = APIRouter(
 def create_product(product: ProductCreate):
 
     try:
+        # Validation de artisan_id pour s'assurer que le format ObjectId est correct
         artisan_object_id = ObjectId(product.artisan_id)
 
     except InvalidId:
@@ -24,6 +25,7 @@ def create_product(product: ProductCreate):
             detail="Invalid artisan ID"
         )
 
+    # Vérification de l'existence de l'artisan dans la base de données
     artisan = db.artisans.find_one(
         {"_id": artisan_object_id}
     )
@@ -49,6 +51,7 @@ def create_product(product: ProductCreate):
     image_url=product.image_url
     )
 
+    # Enregistrement du produit dans la base
     result = db.products.insert_one(document)
 
     return {
@@ -72,6 +75,7 @@ def get_products():
                     artisan_name = artisan["name"]
             except InvalidId:
                 pass
+        # Enrichissement éventuel du produit avec artisan_name pour l'affichage
         product["artisan_name"] = artisan_name
         
         products.append(product)
@@ -84,6 +88,7 @@ def get_price_suggestion(
     material: str = ""
 ):
     try:
+        # Suggestion de prix basée sur les produits similaires (même catégorie et matière)
         result = suggest_price_range(
             db,
             category.strip(),

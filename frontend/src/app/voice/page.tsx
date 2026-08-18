@@ -198,6 +198,8 @@ export default function VoicePage() {
   // SEND DATA TO LISTING
   // =========================
 
+  // Conserve les valeurs issues de la commande vocale avant de compléter
+  // les autres champs avec l'analyse de l'image.
   const handleUseInformation = () => {
     const params = new URLSearchParams();
 

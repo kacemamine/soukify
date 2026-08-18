@@ -23,6 +23,9 @@ def transcribe_audio(
     audio_bytes: bytes,
     suffix: str = ".mp3"
 ) -> str:
+    """
+    Sauvegarde temporairement le fichier audio, l'envoie à Gemini et retourne la transcription.
+    """
 
     temp_path = None
 
@@ -60,6 +63,9 @@ def transcribe_audio(
 def extract_product_data(
     transcription: str
 ) -> VoiceProductData:
+    """
+    Extrait les informations structurées (product_name, price, material) d'une transcription audio.
+    """
 
     prompt = f"""
 Tu analyses une transcription en darija marocaine, arabe ou français.

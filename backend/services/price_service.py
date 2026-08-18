@@ -1,4 +1,9 @@
 def suggest_price_range(db, category: str, material: str):
+    """
+    Recherche dans MongoDB des produits de même catégorie et matière,
+    calcule le prix min, max, moyen et le nombre de références.
+    Retourne uniquement une indication de prix, jamais un prix imposé.
+    """
     query = {}
 
     if category:

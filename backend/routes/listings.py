@@ -23,14 +23,14 @@ async def analyze_product_image_route(
         "image/webp"
     ]
 
-    # Vérification du format
+    # Validation du format image pour s'assurer que c'est une image supportée
     if image.content_type not in allowed_types:
         raise HTTPException(
             status_code=400,
             detail="Format non supporté. Veuillez choisir une image JPEG, PNG ou WebP."
         )
 
-    # Lecture de l'image une seule fois
+    # Lecture du fichier en mémoire une seule fois pour optimiser les performances
     image_bytes = await image.read()
 
     # Vérification fichier vide
@@ -41,7 +41,7 @@ async def analyze_product_image_route(
         )
 
     # -------------------------------------------------
-    # Contrôle qualité de l'image
+    # Contrôle qualité : vérification avant appel IA
     # -------------------------------------------------
 
     quality = check_image_quality(image_bytes)
@@ -53,7 +53,7 @@ async def analyze_product_image_route(
         )
 
     # -------------------------------------------------
-    # Analyse Gemini
+    # Analyse Gemini : extraction des caractéristiques
     # -------------------------------------------------
 
     try:
@@ -81,12 +81,15 @@ async def analyze_product_image_route(
     else:
         ext = "jpg"
         
+    # Génération d'un nom UUID unique pour éviter les collisions
     filename = f"{uuid.uuid4()}.{ext}"
     filepath = os.path.join(uploads_dir, filename)
     
+    # Sauvegarde locale de l'image sur le serveur
     with open(filepath, "wb") as f:
         f.write(image_bytes)
         
+    # Création de l'URL publique de l'image pour le frontend
     image_url = f"/uploads/products/{filename}"
 
     # -------------------------------------------------

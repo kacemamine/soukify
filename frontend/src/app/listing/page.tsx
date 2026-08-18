@@ -261,6 +261,7 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
   }, [preview])
 
   useEffect(() => {
+    // Récupère le profil artisan créé précédemment dans ce navigateur.
     const savedArtisanId = localStorage.getItem('soukify_artisan_id')
     if (savedArtisanId) {
       setArtisanId(savedArtisanId)
@@ -367,6 +368,7 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
     formData.append('image', image)
 
     try {
+      // Analyse d'image : envoi de l'image au backend pour extraire les caractéristiques
       const response = await fetch('http://127.0.0.1:8000/api/listings/analyze', {
         method: 'POST',
         body: formData,
@@ -443,6 +445,7 @@ function ListingPageContent({ voicePrefill }: { voicePrefill: VoicePrefill }) {
   setError(null)
   setSaveMessage(null)
 
+  // Publication d'un produit : préparation des données validées pour la création
   const productPayload = {
     artisan_id: artisanId.trim(),
     title: listing.title.trim(),

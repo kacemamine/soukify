@@ -23,6 +23,9 @@ ALLOWED_AUDIO_TYPES = {
 }
 @router.post("/transcribe")
 async def transcribe_voice(audio: UploadFile = File(...)):
+    """
+    Réception du fichier audio et transcription en texte brut via Gemini.
+    """
     if audio.content_type not in ALLOWED_AUDIO_TYPES:
         raise HTTPException(
             status_code=400,
@@ -47,6 +50,10 @@ async def transcribe_voice(audio: UploadFile = File(...)):
 def extract_voice_data(
     request: VoiceTextRequest
 ):
+    """
+    Extraction structurée de product_name, price et material à partir d'une transcription textuelle,
+    et retour vers le frontend.
+    """
     try:
         result = extract_product_data(
             request.transcription
@@ -67,6 +74,10 @@ def extract_voice_data(
 async def process_voice(
     audio: UploadFile = File(...)
 ):
+    """
+    Processus complet : réception de l'audio, transcription, puis extraction structurée
+    des données du produit avant le retour vers le frontend.
+    """
     if audio.content_type not in ALLOWED_AUDIO_TYPES:
         raise HTTPException(
             status_code=400,

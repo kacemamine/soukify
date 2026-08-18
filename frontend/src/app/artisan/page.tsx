@@ -156,6 +156,7 @@ export default function ArtisanPage() {
         )
       }
 
+      // Enregistre les identifiants localement pour les prochaines visites
       if (data.id) {
         localStorage.setItem('soukify_artisan_id', data.id)
         localStorage.setItem('soukify_artisan_name', name.trim())

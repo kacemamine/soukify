@@ -16,6 +16,14 @@ def normalize(value):
 
 @router.get("/{bespoke_id}")
 def match_artisans(bespoke_id: str):
+    """
+    Calcule le matching entre une demande Bespoke et les artisans disponibles.
+    Le scoring s'établit sur 100 points maximum :
+    - Catégorie compatible : 50 points
+    - Savoir-faire compatible : 20 points
+    - Région identique : 20 points
+    - Artisan disponible : 10 points
+    """
 
     # Vérifier si l'ID MongoDB est valide
     if not ObjectId.is_valid(bespoke_id):
@@ -110,7 +118,7 @@ def match_artisans(bespoke_id: str):
             "reasons": reasons
         })
 
-    # Classer du meilleur au plus faible
+    # Classer du meilleur au plus faible score pour mettre en avant les artisans les plus pertinents
     results.sort(
         key=lambda item: item["score"],
         reverse=True

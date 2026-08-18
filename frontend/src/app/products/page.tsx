@@ -21,6 +21,7 @@ export default function ProductsPage() {
   const [error, setError] = useState(false)
 
   useEffect(() => {
+    // Chargement du catalogue : récupération de tous les produits publiés
     fetch('http://127.0.0.1:8000/api/products')
       .then((res) => {
         if (!res.ok) throw new Error()

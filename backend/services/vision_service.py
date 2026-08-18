@@ -9,6 +9,11 @@ load_dotenv()
 client=genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 def analyze_product_image(image_bytes: bytes,content_type: str):
+    """
+    Envoie une image produit à Gemini pour obtenir une analyse structurée.
+    Retourne le titre, les descriptions (FR/AR), la catégorie, la matière,
+    le style, les couleurs et les tags du produit.
+    """
     image=Image.open(BytesIO(image_bytes))
     prompt = """
 Analyse the Moroccan handcrafted product shown in the image.
