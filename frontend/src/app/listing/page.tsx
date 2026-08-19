@@ -996,14 +996,6 @@ function ProductForm({
           variant="color"
         />
 
-        <EditableTags
-          id="listing-tags"
-          label="Tags de recherche"
-          values={listing.tags}
-          onChange={(values) => updateField('tags', values)}
-          inputClass={inputClass}
-          variant="tag"
-        />
 
         <div className="border-t border-[var(--line)] pt-6">
           <button

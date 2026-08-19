@@ -70,12 +70,6 @@ export default function ProductsPage() {
               SOUKIFY
             </h1>
           </div>
-          <Link
-            href="/"
-            className="text-sm font-semibold text-[var(--green)] hover:underline"
-          >
-            Retour à l&apos;accueil
-          </Link>
         </div>
       </header>
 
@@ -135,16 +129,6 @@ export default function ProductsPage() {
                   <p className="mt-4 font-semibold text-[var(--ink)]">
                     Par {product.artisan_name}
                   </p>
-                )}
-
-                {product.tags && product.tags.length > 0 && (
-                  <div className="mt-6 flex flex-wrap gap-2">
-                    {product.tags.map((tag, idx) => (
-                      <span key={idx} className="rounded bg-[var(--green-soft)] px-2 py-1 text-xs font-semibold text-[var(--green)]">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
                 )}
               </article>
             ))}
